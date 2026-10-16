@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827"><title>遊タイム期待値メモ</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#141f30;--line:#2b3b52;--txt:#f1f5f9;--muted:#a7b5c8;--accent:#78d7c0;--warn:#ffcf70}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}header{padding:20px 16px 14px;background:#101827;border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:var(--muted);font-size:13px}.wrap{max-width:760px;margin:auto;padding:14px;display:grid;gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px}.card h2{font-size:17px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-size:13px;color:var(--muted)}input,select{width:100%;padding:12px 10px;border-radius:10px;border:1px solid #40516a;background:#0b1423;color:var(--txt);font-size:16px;min-width:0}button,.link{border:0;border-radius:10px;background:var(--accent);color:#08221c;font-weight:700;padding:12px 14px;font-size:15px;text-decoration:none;display:inline-block;text-align:center;cursor:pointer}.secondary{background:#26364d;color:var(--txt);border:1px solid #40516a}.results{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric{padding:12px;border-radius:12px;background:#0b1423;border:1px solid var(--line)}.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:22px;margin-top:4px;overflow-wrap:anywhere}.positive{color:var(--accent)}.negative{color:#ff9b9b}.note{font-size:12px;color:var(--muted)}.status{padding:9px 11px;border-radius:9px;background:#352c18;color:#ffe0a0;font-size:13px}.source{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.source a{color:var(--accent);font-size:13px}.details{white-space:pre-wrap;font-size:13px;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 8px;font-size:11px;color:var(--warn)}.footer{font-size:12px;color:var(--muted);padding:0 3px 20px} @media(max-width:420px){.grid{grid-template-columns:1fr 1fr}.metric strong{font-size:19px}.card{padding:13px}}
+</style></head>
+<body>
+<header><div class="wrap" style="padding:0"><h1>遊タイム期待値メモ</h1><p>4円パチンコ向け・手入力版｜等価ベースで玉数計算</p></div></header>
+<main class="wrap">
+<section class="card"><h2>1. 機種データ</h2><div class="grid">
+<div class="field"><label for="trigger">遊タイム発動回転数</label><input id="trigger" type="number" min="1" placeholder="未確認なら空欄"></div>
+<div class="field"><label for="prob">通常時大当たり確率（分母）</label><input id="prob" type="number" min="1" step=".01" placeholder="例 99.9"></div>
+<div class="field full"><label for="tyNormal">初当たり1回あたりの期待出玉（通常・遊タイム共通／玉）</label><input id="tyNormal" type="number" min="0" placeholder="例 3500"></div>
+<div class="field"><label for="time">遊タイム時短回数</label><input id="time" type="number" min="0" placeholder="未確認なら空欄"></div>
+</div><p class="note">機種データはすべて手入力。期待出玉は通常初当たり・遊タイム経由の両方に同じ値を使用します。</p></section>
+<section class="card"><h2>2. いまの台の条件</h2><div class="grid">
+<div class="field"><label for="current">現在の通常時回転数</label><input id="current" type="number" min="0" value="250"></div>
+<div class="field"><label for="rate">千円あたり回転率</label><input id="rate" type="number" min="1" step=".1" value="18"></div>
+
+
+
+</div><div style="margin-top:12px"><button id="calc">期待値を計算</button> <button class="secondary" id="reset">入力リセット</button></div></section>
+<section class="card"><h2>3. 試算結果 <span class="pill">理論値・保証なし</span></h2><div id="warning" class="status">大当たり確率・遊タイム発動回転数・時短回数・期待出玉を入力してください。</div><div class="results" style="margin-top:10px">
+<div class="metric"><small>遊タイム到達率</small><strong id="arrival">—</strong></div><div class="metric"><small>通常時に先当たりする確率</small><strong id="hitFirst">—</strong></div>
+<div class="metric"><small>想定持ち玉消費数（平均）</small><strong id="cost">—</strong></div><div class="metric"><small>期待収支（玉換算・簡易モデル）</small><strong id="ev">—</strong></div>
+<div class="metric"><small>期待出玉（参考）</small><strong id="expectedBalls">—</strong></div></div><p class="note" id="formula"></p></section>
+<section class="card"><h2>計算条件・注意点</h2><div class="details">・到達率：通常時の残り回転数 N、通常時大当たり確率 p とし、(1-p)^N で計算する簡易モデル。\n・持ち玉消費数：到達または通常当選までの平均消化回転数÷回転率×250玉。4円貸玉・等価ベースで必要玉数に換算する簡易モデル。\n・期待出玉：手入力した1つの値を通常初当たり・遊タイム経由の両方に同じ値として使用する簡易モデル。遊タイム中当選率は時短回数と通常確率から推定するため、右打ち中の確率が異なる機種や複雑な振り分けの機種では誤差が出る。\n・期待収支（玉）：期待出玉（玉）－平均持ち玉消費数（玉）。全項目を等価ベースの玉数で計算し、円換算や交換率は使わない。右打ち中の玉増減、残保留、ST等の複雑な分岐はこの試作計算では扱わない。\n・回転数は「通常時の低確率回転」が前提。ST・時短・残保留・ラムクリア・宵越しは機種ごとに確認が必要。\n・時給換算・消化時間は計算しない。期待値だけを表示する。\n・持ち玉は無制限に保有し、すべて持ち玉で遊技する仮定。実際の持ち玉不足や現金投資は計上しない。\n・この簡易モデルは実戦の判断を保証しない。計算対象外の機種・条件は無理に数字を出さない。</div></section>
+<p class="footer">機種データは保存せず、入力した数値でその都度計算します。</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function num(id){let v=$(id).value.trim();return v===""?null:Number(v)}
+function fmt(n){return Number.isFinite(n)?Math.round(n).toLocaleString("ja-JP"):"—"}
+function calculate(){
+ let trigger=num("trigger"),pden=num("prob"),tn=num("tyNormal"),ty=tn,rate=num("rate"),current=num("current");
+ let rem=(trigger===null||current===null)?null:Math.max(0,trigger-current)
+ const rentalBallsPer1000=250; // 4円貸玉・等価ベース
+ let valid=rem!==null&&pden>1&&rate>0&&rem>=0;
+ if(!valid){$("warning").textContent="遊タイム発動回転数、現在の通常時回転数、大当たり確率（分母は1より大きい値）、回転率を入力してください。";["arrival","hitFirst","cost","ev","expectedBalls"].forEach(x=>$(x).textContent="—");return}
+ let p=1/pden, arrival=Math.pow(1-p,rem), hit=1-arrival;
+ // Expected spins until a hit or the yutime threshold, with N capped trials.
+ let expectedSpins=0;for(let i=0;i<rem;i++)expectedSpins+=Math.pow(1-p,i);
+ let consumedBalls=expectedSpins/rate*rentalBallsPer1000;
+ let tyValid=tn!==null&&tn>=0;
+ let yutimeSpins=num("time");
+ let yutimeHit=(yutimeSpins!==null&&yutimeSpins>=0)?(1-Math.pow(1-p,yutimeSpins)):null;
+ let expected=tyValid&&yutimeHit!==null?hit*tn+arrival*yutimeHit*ty:null;
+ let ev=expected!==null?expected-consumedBalls:null;
+ $("arrival").textContent=(arrival*100).toFixed(1)+"%";$("hitFirst").textContent=(hit*100).toFixed(1)+"%";
+ $("cost").textContent=fmt(consumedBalls)+" 玉";$("expectedBalls").textContent=expected===null?"未確認":fmt(expected)+" 玉";
+ $("ev").textContent=ev===null?"未確認":(ev>=0?"+":"")+fmt(ev)+" 玉";$("ev").className=ev===null?"":" "+(ev>=0?"positive":"negative");
+ let missing=[];if(tn===null)missing.push("期待出玉");if(trigger===null)missing.push("発動回転数");if(num("time")===null)missing.push("遊タイム時短回数");
+ $("warning").textContent=missing.length?"未確認データ："+missing.join("、")+"。期待出玉・期待収支は未確定です。":"計算完了。TYは確認済み入力値を使用しています。";
+ $("formula").textContent=`残り回転数 N=${rem}回、通常確率 1/${pden}、回転率 ${rate}回/千円、4円貸玉・等価ベース（250玉／千円）、持ち玉無制限で全区間を持ち玉のみ使用。到達率=(1−1/${pden})^${rem}。平均持ち玉消費数=平均消化回転数÷回転率×250玉。期待収支=期待出玉−平均持ち玉消費数。遊タイム中当選率は時短回数を${num("time")}回、確率を通常時と同じと仮定して算出。平均消化回転数は当選または発動までの上限付き幾何分布。`;
+}
+$("calc").addEventListener("click",calculate);
+$("reset").addEventListener("click",()=>{
+ ["trigger","prob","tyNormal","time"].forEach(id=>$(id).value="");
+ $("current").value=0;
+ $("rate").value=18;
+ ["arrival","hitFirst","cost","ev","expectedBalls"].forEach(id=>$(id).textContent="—");
+ $("ev").className="";
+ $("warning").textContent="大当たり確率・遊タイム発動回転数・時短回数・期待出玉を入力してください。";
+ $("formula").textContent="";
+});
+</script></body></html>
